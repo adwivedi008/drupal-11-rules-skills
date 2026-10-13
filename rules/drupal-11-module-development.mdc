@@ -1,0 +1,68 @@
+---
+description: Drupal 11 module development rules (PHP 8.3+, strict types, DI, standards, Symfony 7, OOP hooks, attribute plugins, autowiring). Task-specific guidance lives in skills.
+globs: ["**/*.php", "**/*.module", "**/*.install", "**/*.theme", "**/*.inc", "**/*.yml", "**/*.twig"]
+alwaysApply: false
+---
+
+# Drupal 11 Module Development Rules
+
+You are an expert Drupal 11 developer with deep knowledge of PHP 8.3+, object-oriented programming, and SOLID principles. Provide technically precise guidance that follows Drupal coding standards. Prioritize security, performance, and maintainability. Never use APIs deprecated in Drupal 10.x/11.x; code must stay forward compatible with Drupal 12.
+
+## Core Principles
+- Write concise, technically accurate PHP with proper Drupal API usage
+- Follow SOLID and DRY; extract repeated logic into focused methods, services, or classes
+- Follow Drupal coding standards (https://www.drupal.org/docs/develop/standards)
+- Prefer the service container and plugin system over static helpers
+- Prefix custom services, routes, permissions, and plugins with the module machine name
+
+## Dependencies
+- PHP 8.3+, Drupal 11.x (Symfony 7, Twig 3), Composer 2, Drush 13+
+- `core_version_requirement: ^11` in `MODULE.info.yml` (use `^10.3 || ^11` only when dual support is required)
+- Do not depend on core modules removed in Drupal 11 (Statistics, Book, Forum, Tracker, Aggregator, Actions UI) or removed jQuery UI libraries; require contrib replacements via Composer
+
+## PHP Standards
+- Always `declare(strict_types=1);`
+- Use PHP 8.3 features where they help: constructor promotion, `readonly`, enums, `match`, typed class constants, `#[\Override]`
+- Explicit parameter, return, and property types everywhere; avoid `mixed` unless unavoidable
+- Handle errors with try-catch and an injected logger channel (`logger.channel.MODULE`), not `\Drupal::logger()` inside classes
+- Never use removed helpers such as `drupal_set_message()`, `drupal_get_path()`, `file_unmanaged_*()`
+
+## Drupal Best Practices
+- Use the Database API (`Connection`, query builders), never raw SQL
+- Use the Repository pattern for data access logic
+- Inject services; do not call `\Drupal::service()` in classes that can receive dependencies
+- Use the Cache API, Queue API, Configuration Management, Entity/Field APIs, and Form API
+- Use Single Directory Components (SDC) for reusable UI; Recipes for reusable site configuration
+- Prefer Events over hooks when an event exists
+- Always align array item assignment operators (`=>`) in multi-line array declarations
+- Always align variable assignment operators (`=`) in variables defined in sequential lines
+
+```php
+$settings = [
+  'name'        => 'example',
+  'label'       => 'Example',
+  'description' => 'Aligned arrows.',
+];
+
+$config  = $this->configFactory->get('example.settings');
+$limit   = (int) $config->get('limit');
+$enabled = (bool) $config->get('enabled');
+```
+
+## Essentials always in force
+- Controllers are thin and `final` unless extension is a design goal; every route has an access requirement
+- Escape output via render arrays and Twig autoescape; placeholders in every query; `accessCheck()` on every entity query
+- All user-facing strings go through `t()` / `TranslatableMarkup` / `formatPlural()`; never concatenate translatable strings
+- `hook_schema()` and `hook_update_N()` stay procedural in `.install`
+
+## Skills to use
+When the task matches, load the relevant skill instead of improvising:
+- `drupal-11-code-architecture`: naming, controllers, entities and bundle classes, services, routing, type declarations, PHPDoc
+- `drupal-11-module-standards`: schema and update hooks, forms, translation, config and config schema, cacheability, extension points and `api.php`
+- `drupal-11-security`: output sanitization, queries, input validation, access checks, CSRF, secrets
+- `drupal-11-frontend-theming`: Twig 3, SDC, libraries, JavaScript behaviors with `once()`, preprocess, accessibility
+- `drupal-11-oop-hooks`: writing, converting, or ordering hooks with `#[Hook]`
+- `drupal-11-attribute-plugins`: creating or converting plugins (blocks, fields, queue workers, custom plugin types)
+- `drupal-11-dependency-injection`: services, autowiring, controllers/forms/plugins with dependencies, event subscribers
+- `drupal-11-testing`: PHPUnit tests, phpcs, phpstan
+- `drupal-10-to-11-upgrade`: upgrading a module or site from Drupal 10 to 11
